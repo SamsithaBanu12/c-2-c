@@ -12,7 +12,6 @@ const Navbar = ({ onBarClicked }) => {
           </button>
           <img src="/galaxeye-white.png" alt="Logo" className="logo-image" />
         </div>
-        <Button name="Command Sender" path="/command-sender" />
       </nav>
     </NavbarStyled>
   );

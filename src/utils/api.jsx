@@ -44,7 +44,6 @@ export const sendCommand = async (command) => {
     }
 
     const data = await res.json();
-    console.log("Command sent successfully:", data);
     return data;
   } catch (error) {
     console.error("Error sending command:", error);

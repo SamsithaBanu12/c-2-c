@@ -3,19 +3,41 @@ import { ConsoleCommandStyled } from "./ConsoleCommandStyled";
 import SelectControl from "../SelectControl/SelectControl";
 import { useSelector } from "react-redux";
 import { sendCommand } from "../../utils/api";
+import {
+  editedCommandsHistory,
+  selectedOptions
+} from "../../constants/contants";
+import Toggle from "../Toggle/Toggle";
+import { filterPacketDetails, getDisplayValue } from "../../utils/utils";
 
 export const ConsoleCommand = () => {
   const commands = useSelector((state) => state?.cmds?.cmds?.result);
-  const packet_name = "200_EPS_TC_GET_SUB_SYS_INFO";
+  const [commandHistory, setCommandHistory] = useState(editedCommandsHistory);
+  const [packetName, setPacketName] = useState("");
   const [packetDetails, setPacketDetails] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [isHex, setIsHex] = useState(false);
+  const [allSelectedOptions, setAllSelectedOptions] = useState([
+    {
+      label: "Type",
+      selectedData: "EMULATOR"
+    }
+  ]);
 
   useEffect(() => {
+    const packet_name = allSelectedOptions?.find(
+      (item) => item?.label === "Command"
+    )?.selectedData;
+
+    setPacketName(packet_name);
+
     const packet_details = commands?.filter(
       (item) => item?.packet_name === packet_name
     );
-    setPacketDetails(packet_details?.[0]?.items || []);
-  }, [packet_name, commands]);
+    const filteredDetails = filterPacketDetails(packet_details);
+    setPacketDetails(filteredDetails);
+  }, [commands, allSelectedOptions]);
 
   const handleChange = (index, newValue) => {
     const updatedRows = [...packetDetails];
@@ -32,103 +54,129 @@ export const ConsoleCommand = () => {
 
         const fullCommand = `EMULATOR 200_EPS_TC_GET_SUB_SYS_INFO with ${paramsString}`;
         await sendCommand([fullCommand]);
-        console.log("Command sent successfully:", fullCommand);
       } catch (err) {
         console.error("Error sending commands", err);
       }
+    } else {
+      let editedCommands = {
+        id: new Date().getTime(),
+        targetName: "EMULATOR",
+        packetName: packetName,
+        params: [
+          { name: "parameter", value: packetDetails?.parameter_name },
+          { name: "maxValue", value: packetDetails?.maximum },
+          { name: "minValue", value: packetDetails?.minimum },
+          { name: "dataType", value: packetDetails?.data_type },
+          { name: "bitSize", value: packetDetails?.bit_size },
+          {
+            name: "default",
+            value: getDisplayValue(false, packetDetails?.default)
+          },
+          { name: "endianness", value: packetDetails?.endianness },
+          { name: "description", value: packetDetails?.description }
+        ]
+      };
+      setCommandHistory((prev) => {
+        const updated = [...prev, editedCommands];
+        return updated;
+      });
     }
     setIsEditing(!isEditing);
   };
 
-  const getDisplayValue = (value) => {
-    if (typeof value === "object" && value !== null) {
-      return value.raw ?? JSON.stringify(value);
-    }
-    return value ?? "";
+  useEffect(() => {
+    localStorage.setItem("commandHistory", JSON.stringify(commandHistory));
+  }, [commandHistory]);
+
+  const handleSelectedOptions = (item, value) => {
+    setOpenDropdown(null);
+    setAllSelectedOptions((prev) => {
+      const exists = prev.some((opts) => opts?.label === item?.label);
+
+      if (exists) {
+        return prev.map((opts) =>
+          opts?.label === item?.label
+            ? { label: item?.label, selectedData: value }
+            : opts
+        );
+      } else {
+        return [...prev, { label: item?.label, selectedData: value }];
+      }
+    });
   };
 
   return (
     <ConsoleCommandStyled>
       <div className="console-wrapper">
         <div className="console-header-wrapper">
-          <div className="console-header">Console</div>
+          <div className="console-header">CONSOLE</div>
           <div className="console-icon"></div>
         </div>
-        <div className="console-type-wrapper">
-          <div className="d-flex">
-            <button>TT&C</button>
-            <button>TASK</button>
-          </div>
-          <SelectControl
-            label="Type"
-            defaultData="EMULATOR"
-            data={[]}
-            isFromTelecommands={false}
-          />
-        </div>
         <div className="console-command-wrapper">
-          <SelectControl
-            label="Component"
-            defaultData="All"
-            data={[]}
-            isFromTelecommands={false}
-          />
-          <SelectControl
-            label="Command"
-            defaultData="TeleCommands"
-            data={commands?.cmds?.result || []}
-            isFromTelecommands
-          />
+          {selectedOptions?.map((item) => (
+            <SelectControl
+              key={item?.id}
+              label={item?.label}
+              defaultData={item?.defaultData}
+              data={item?.isFromTelemetry ? commands : item.data}
+              isFromTelecommands={item?.isFromTelemetry}
+              isOpen={openDropdown === item?.label}
+              onToggle={() =>
+                setOpenDropdown(
+                  openDropdown === item?.label ? null : item?.label
+                )
+              }
+              onClose={(value) => handleSelectedOptions(item, value)}
+            />
+          ))}
         </div>
-        <div className="console-footer">
-          <div className="footer-header">
-            <div className="text">Command Data</div>
-          </div>
-          <div>
-            <button onClick={toggleEdit} style={{ marginBottom: "10px" }}>
-              {isEditing ? "Save All" : "Edit All"}
+        {packetName && (
+          <div className="console-footer">
+            <div className="footer-header">
+              <div className="text">Command Data</div>
+              <div className="toggle-wrapper">
+                <Toggle inHex={isHex} setInHex={setIsHex} />
+              </div>
+            </div>
+            <div className="footer-table">
+              <table className="command-table">
+                <thead style={{ background: "white", padding: "10px" }}>
+                  <tr className="heading-row">
+                    <th>Name</th>
+                    <th>Value or State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {packetDetails.map((row, index) => {
+                    const displayValue = getDisplayValue(isHex, row.default);
+                    return (
+                      <tr key={index} className="data-row">
+                        <td>{row.name}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={displayValue}
+                              onChange={(e) =>
+                                handleChange(index, e.target.value)
+                              }
+                              style={{ padding: "4px" }}
+                            />
+                          ) : (
+                            displayValue || "0"
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <button onClick={toggleEdit} className="edit-button">
+              {isEditing ? "Send" : "Edit"}
             </button>
-            <table style={{ borderCollapse: "collapse", width: "100%" }}>
-              <thead>
-                <tr style={{ background: "#12283A", color: "white" }}>
-                  <th style={{ padding: "8px", textAlign: "left" }}>Name</th>
-                  <th style={{ padding: "8px", textAlign: "left" }}>
-                    Value or State
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {packetDetails.map((row, index) => {
-                  const displayValue = getDisplayValue(row.default);
-                  return (
-                    <tr
-                      key={index}
-                      style={{ borderBottom: "1px solid #2E3A4A" }}
-                    >
-                      <td style={{ padding: "8px", color: "white" }}>
-                        {row.name}
-                      </td>
-                      <td style={{ padding: "8px", color: "white" }}>
-                        {isEditing ? (
-                          <input
-                            type="text"
-                            value={displayValue}
-                            onChange={(e) =>
-                              handleChange(index, e.target.value)
-                            }
-                            style={{ padding: "4px" }}
-                          />
-                        ) : (
-                          displayValue || "0"
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           </div>
-        </div>
+        )}
       </div>
     </ConsoleCommandStyled>
   );

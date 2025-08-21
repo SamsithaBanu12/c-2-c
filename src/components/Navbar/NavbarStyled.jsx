@@ -2,11 +2,12 @@ import styled from "styled-components";
 
 export const NavbarStyled = styled.div`
   .navbarWrapper {
-    background-color: rgb(10, 16, 55);
+    // background-color: rgb(10, 16, 55);
+    background-color: #58419c;
     border-radius: 8px;
-    padding: 10px 15px;
-    margin: 15px;
-    box-shadow: 0 10px 15px -3px rgb(31 41 55), 0 4px 6px -4px rgb(31 41 55);
+    padding: 0px 15px;
+    margin: 5px 5px;
+    // box-shadow: 0 10px 15px -3px rgb(31 41 55), 0 4px 6px -4px rgb(31 41 55);
     display: flex;
     flex-direction: row;
     align-items: center;

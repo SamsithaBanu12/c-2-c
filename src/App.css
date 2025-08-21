@@ -1,7 +1,6 @@
-.bottom-app-wrapper{
+.bottom-app-wrapper {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  gap:10px;
-  padding:0px 15px;
+  gap: 10px;
+  padding: 0px 15px;
 }

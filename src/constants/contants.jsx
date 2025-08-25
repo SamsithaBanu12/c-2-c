@@ -5,7 +5,7 @@ export const method_types = {
 };
 export const headers = {
   "Content-Type": "application/json",
-  Authorization: "Shajahan@17102001"
+  Authorization: "mos12345"
 };
 export const method_name = {
   GET_ALL_COMMANDS: "get_all_cmds",

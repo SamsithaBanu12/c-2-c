@@ -1,11 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ConsoleCommand } from "../ConsoleCommand/ConsoleCommand";
 import MessageCommands from "../MessageCommand/MessageCommands";
 import { CommandSenderStyled } from "./CommandSenderStyled";
 import { ScheduleUpload } from "../ScheduleUpload/ScheduleUpload";
+import { getStoredEditedCommands } from "../../utils/api";
+import { useDispatch } from "react-redux";
+import { getstoreCommands } from "../../redux/actions/cmdsActions";
 
-const CommandSender = ({ allCommands }) => {
+const CommandSender = () => {
   const [selectedTab, setSelectedTab] = useState("RTC");
+  const [isCommandEdited, setIsCommandEdited] = useState(false);
+  const [isPacketName, setIsPacketName] = useState(false);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    const fetchAllStoredCommands = async () => {
+      try {
+        const getAllCommands = await getStoredEditedCommands();
+        const resultAction = dispatch(getstoreCommands(getAllCommands)); 
+
+        if (resultAction?.payload?.message) {
+          console.error('Error fetching stored commands:', resultAction.payload.message);
+        } else {
+          console.log('✅ Fetched all stored commands');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch stored commands:', error);
+      }
+    };
+
+    fetchAllStoredCommands();
+  }, [isCommandEdited, dispatch]);
+  
   return (
     <CommandSenderStyled>
       <div className="commandSenderWrapper">
@@ -41,9 +67,11 @@ const CommandSender = ({ allCommands }) => {
         <div className="command-sender-bottom">
           {selectedTab === "RTC" && (
             <>
-              <ConsoleCommand />
+              <ConsoleCommand setIsCommandEdited={setIsCommandEdited} setIsPacketName={setIsPacketName} />
               <div className="vertical"></div>
-              <MessageCommands />
+              {isPacketName &&
+                <MessageCommands />
+              }
             </>
           )}
           {selectedTab === "Schedule Upload" && (

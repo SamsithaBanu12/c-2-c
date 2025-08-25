@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { ConsoleCommandStyled } from "./ConsoleCommandStyled";
 import SelectControl from "../SelectControl/SelectControl";
-import { useSelector } from "react-redux";
-import { sendCommand } from "../../utils/api";
+import { useDispatch, useSelector } from "react-redux";
+import { sendEditedCommand, storeEditedCommand } from "../../utils/api";
 import {
   editedCommandsHistory,
-  selectedOptions
+  selectedOptions,
+  target_name
 } from "../../constants/contants";
 import Toggle from "../Toggle/Toggle";
-import { filterPacketDetails, getDisplayValue } from "../../utils/utils";
+import { filterPacketDetails, getDisplayValue, getHex, getParamsString, getStoreParamsString, getToastMessage } from "../../utils/utils";
+import { sendCommand, storeCommand } from "../../redux/actions/cmdsActions";
+import moment from "moment/moment";
 
-export const ConsoleCommand = () => {
+export const ConsoleCommand = ({setIsCommandEdited, setIsPacketName}) => {
   const commands = useSelector((state) => state?.cmds?.cmds?.result);
   const [commandHistory, setCommandHistory] = useState(editedCommandsHistory);
+  const dispatch = useDispatch();
   const [packetName, setPacketName] = useState("");
   const [packetDetails, setPacketDetails] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -43,50 +47,43 @@ export const ConsoleCommand = () => {
     const updatedRows = [...packetDetails];
     updatedRows[index] = { ...updatedRows[index], default: Number(newValue) };
     setPacketDetails(updatedRows);
+    setIsPacketName(true);
   };
 
   const toggleEdit = async () => {
-    if (isEditing) {
       try {
-        const paramsString = packetDetails
-          .map((row) => `${row.name} ${row.default ?? 0}`)
-          .join(", ");
+        const fullCommand = `${target_name} ${packetName} with ${getParamsString(packetDetails)}`;
+        const data = await sendEditedCommand(fullCommand);
+        const dispatched_command = dispatch(sendCommand(data));
+        if(dispatched_command?.type === "SEND_COMMAND") {
+          getToastMessage(dispatched_command?.payload);
+        }
+        //second api call
+        if(dispatched_command?.payload?.result) {
+          const editedCommands = {
+            target_name: target_name,
+            packet_name: packetName,
+            sent_time: moment().format("YYYY-MM-DD HH:mm:ss"), 
+            status: 'fetched',
+            tctm_type: 'TC',
+            params: getStoreParamsString(packetDetails),
+            packet_details: packetDetails,
+            tctm_id: 23,
+          }
+          const editedpostCommands = await storeEditedCommand(editedCommands);
+          const dispatched_store_command = dispatch(storeCommand(editedpostCommands));
 
-        const fullCommand = `EMULATOR 200_EPS_TC_GET_SUB_SYS_INFO with ${paramsString}`;
-        await sendCommand([fullCommand]);
+          if(dispatched_store_command?.payload?.detail) {
+            console.error('Error', `${dispatched_store_command?.payload?.detail[0]?.type} fields required`);
+          }else{
+            setIsCommandEdited(prev => !prev);
+            console.log('Stored command successfully')
+          }
+        }
       } catch (err) {
         console.error("Error sending commands", err);
       }
-    } else {
-      let editedCommands = {
-        id: new Date().getTime(),
-        targetName: "EMULATOR",
-        packetName: packetName,
-        params: [
-          { name: "parameter", value: packetDetails?.parameter_name },
-          { name: "maxValue", value: packetDetails?.maximum },
-          { name: "minValue", value: packetDetails?.minimum },
-          { name: "dataType", value: packetDetails?.data_type },
-          { name: "bitSize", value: packetDetails?.bit_size },
-          {
-            name: "default",
-            value: getDisplayValue(false, packetDetails?.default)
-          },
-          { name: "endianness", value: packetDetails?.endianness },
-          { name: "description", value: packetDetails?.description }
-        ]
-      };
-      setCommandHistory((prev) => {
-        const updated = [...prev, editedCommands];
-        return updated;
-      });
-    }
-    setIsEditing(!isEditing);
   };
-
-  useEffect(() => {
-    localStorage.setItem("commandHistory", JSON.stringify(commandHistory));
-  }, [commandHistory]);
 
   const handleSelectedOptions = (item, value) => {
     setOpenDropdown(null);
@@ -138,6 +135,11 @@ export const ConsoleCommand = () => {
                 <Toggle inHex={isHex} setInHex={setIsHex} />
               </div>
             </div>
+            <div className="edit-container">
+              <button onClick={()=>setIsEditing(!isEditing)} className="edit-button">
+                {isEditing ?'Cancel': 'Edit'}
+              </button>
+            </div>
             <div className="footer-table">
               <table className="command-table">
                 <thead style={{ background: "white", padding: "10px" }}>
@@ -172,8 +174,8 @@ export const ConsoleCommand = () => {
                 </tbody>
               </table>
             </div>
-            <button onClick={toggleEdit} className="edit-button">
-              {isEditing ? "Send" : "Edit"}
+            <button onClick={toggleEdit} className="send-button">
+              Send
             </button>
           </div>
         )}

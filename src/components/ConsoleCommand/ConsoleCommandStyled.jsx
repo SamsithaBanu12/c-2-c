@@ -27,8 +27,24 @@ export const ConsoleCommandStyled = styled.div`
       padding: 15px 0px 20px 0px;
       border-bottom: 1px solid gray;
     }
+    .edit-container{
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      width: 100%;
+    }
+    .edit-button {
+      background: #58419c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 25px;
+      cursor: pointer;
+      font-size: 15px;
+      margin-top: 15px;
+    }
     .console-footer {
-      .edit-button {
+      .send-button {
         background: #58419c;
         color: white;
         border: none;

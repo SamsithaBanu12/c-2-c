@@ -40,7 +40,6 @@ export const CommandSenderStyled = styled.div`
     .command-sender-bottom {
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
       align-items: flex-start;
     }
   }

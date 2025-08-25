@@ -22,26 +22,76 @@ export const MessageCommandStyled = styled.div`
     width: max-content; 
   }
 
-  .message-table-wrapper {
-    max-height: 70vh;
-    max-width: 50vw;
+  .message-command-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    overflow: hidden;
+    width: 53vw;
+  }
+  .message-command-wrapper .message-table-wrapper {
+    flex: 1;
     overflow-y: auto;
-    overflow-x: auto;
   }
-
-  thead th {
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 2;
-    text-align: left;
+  .message-command-wrapper.split-view .message-table-wrapper {
+    flex: 0 0 50%; 
   }
-
-  .message-table-wrapper::-webkit-scrollbar {
+  .command-details {
+    flex: 0 0 50%;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border-radius: 8px;
+    background: #F1F1F1;
+    
+  }
+  .command-details-header {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+  }
+  .command-details-body {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+  }
+  .json-content {
+    flex: 1;
+    overflow-y: auto;
+    height: 8%;
+    background-color: #fff;
+    padding: 10px;
+    word-break: break-word;
+    max-width: 50%;
+    border-right: 1px solid #ccc;
+    margin: 0px;
+  }
+  .close{
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .json-content::-webkit-scrollbar{
     display: none;
   }
-  .message-table-wrapper {
-    -ms-overflow-style: none; 
-    scrollbar-width: none; 
+  .json-content{
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .message-table-wrapper::-webkit-scrollbar{
+    display: none;
+  }
+  .message-table-wrapper{ 
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .parameter{
+    margin-top: 10px;
+    font-size: 16x;
+    font-weight: 500;
+    max-width: 50%;
   }
 `;

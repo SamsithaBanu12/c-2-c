@@ -8,6 +8,7 @@ import Navbar from "./components/Navbar/Navbar";
 import Sidebar from "./components/Sidebar/Sidebar";
 import { useState } from "react";
 import CommandSenderPage from "./pages/CommandSenderPage";
+import { ToastContainer } from "react-toastify";
 
 function App() {
   const [barClicked, setBarClicked] = useState(false);
@@ -28,6 +29,17 @@ function App() {
           <Route path="/data-extractor" element={<DataExtractor />} />
         </Routes>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000} // 3 seconds
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }

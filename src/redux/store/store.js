@@ -1,10 +1,14 @@
 // store.ts
 import { configureStore } from "@reduxjs/toolkit";
-import cmdsReducer from "../reducers/cmdsReducer";
+import cmdsReducer, { getstoreCommands, storeCommand } from "../reducers/cmdsReducer";
+import { sendCommand } from "../actions/cmdsActions";
 
 export const store = configureStore({
   reducer: {
-    cmds: cmdsReducer
+    cmds: cmdsReducer,
+    editCommand: sendCommand,
+    storeCommand: storeCommand,
+    getstoreCommands: getstoreCommands
   }
 });
 

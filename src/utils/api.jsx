@@ -23,7 +23,7 @@ export const getAllCommands = async () => {
   return data;
 };
 
-export const sendCommand = async (command) => {
+export const sendEditedCommand = async (command) => {
   try {
     const res = await fetch(`${backend_api}/api`, {
       method: method_types["POST"],
@@ -38,15 +38,43 @@ export const sendCommand = async (command) => {
         }
       })
     });
-
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
+    if(res.ok){
+      const data = await res.json();
+      return data;
+    }else{
+      return await res.json();
     }
+  } catch (error) {
+    console.error("Error sending command:", error);
+    return error;
+  }
+};
 
+export const storeEditedCommand = async (editedCommands) => {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/edit-commands/', {
+      method: method_types["POST"],
+      headers: headers,
+      body: JSON.stringify(editedCommands)
+    });
     const data = await res.json();
     return data;
   } catch (error) {
-    console.error("Error sending command:", error);
-    throw error;
+    console.error("Error storing edited command:", error);
+    return error;
   }
-};
+}
+
+export const getStoredEditedCommands = async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:8000/edit-commands/', {
+            method: method_types["GET"],
+            headers: headers,
+    });
+    const data = await res.json();
+    return data;
+  } catch (error) {
+      console.error("Error fetching stored edited commands:", error);
+      return error;
+  }
+};  
